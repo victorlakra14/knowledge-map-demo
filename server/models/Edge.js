@@ -38,6 +38,6 @@ const edgeSchema = new Schema({
         type: String,
         required: false
     },
-})
+}, { timestamps: true })
 
 exports.Edge = mongoose.model("Edge", edgeSchema);

@@ -18,6 +18,6 @@ const nodeSchema = new Schema({
         type: Object,
         required: false
     }
-})
+}, { timestamps: true })
 
 exports.Node = mongoose.model("Node", nodeSchema);

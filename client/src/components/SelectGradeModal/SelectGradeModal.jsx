@@ -6,6 +6,9 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import { Autocomplete, Checkbox, FormControlLabel, TextField } from '@mui/material';
+
+const grades = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 const style = {
     position: 'absolute',
@@ -27,6 +30,15 @@ export const SelectGradeModal = ({mainGrade, setMainGrade}) => {
 
     const handleGradeChange = (e) => {
         setMainGrade(e.target.value)
+    }
+
+    const handleSelectAllGrades = () => {
+        if (mainGrade.length === grades.length) {
+            setMainGrade([])
+        }
+        else {
+            setMainGrade(grades)
+        }
     }
 
 

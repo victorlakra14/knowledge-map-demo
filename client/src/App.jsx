@@ -95,7 +95,7 @@ function App() {
   };
 
   // const main grade selection
-  const [mainGrade, setMainGrade] = useState(1);
+  const [mainGrade, setMainGrade] = useState([]);
 
   // Test server backend data fetch
   const getNodes = async () => {
@@ -112,6 +112,8 @@ function App() {
     getNodes();
     getEdges();
   }, []);
+
+  console.log("main grade", mainGrade);
 
   return (
     <>
