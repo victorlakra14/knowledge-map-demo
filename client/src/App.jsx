@@ -95,25 +95,32 @@ function App() {
   };
 
   // const main grade selection
-  const [mainGrade, setMainGrade] = useState([]);
+  const [mainGrade, setMainGrade] = useState(["1"]);
 
   // Test server backend data fetch
   const getNodes = async () => {
-    const res = await axiosInstance.get("/node");
-    setNodes(res.data.nodes);
+    try {
+      const res = await axiosInstance.get("/node");
+      // const res = await axiosInstance.post("/node/filter", {course_ids: mainGrade})
+      setNodes(res.data.nodes);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const getEdges = async () => {
-    const res = await axiosInstance.get("/edge");
-    setEdges(res.data.edges);
+    try {
+      const res = await axiosInstance.get("/edge");
+      setEdges(res.data.edges);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   useEffect(() => {
     getNodes();
     getEdges();
   }, []);
-
-  console.log("main grade", mainGrade);
 
   return (
     <>
@@ -138,6 +145,7 @@ function App() {
           mainGrade={mainGrade}
           setMainGrade={setMainGrade}
           addNewNode={addNewNode}
+          setNodes={setNodes}
         />
       </Panel>
     </>

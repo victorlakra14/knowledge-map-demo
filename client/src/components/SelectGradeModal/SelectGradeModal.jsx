@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Modal from '@mui/material/Modal';
@@ -6,9 +6,8 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import { Autocomplete, Checkbox, FormControlLabel, TextField } from '@mui/material';
-
-const grades = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+import { Autocomplete, Checkbox, FormControlLabel, ListItemText, TextField } from '@mui/material';
+import axiosInstance from '../../Axios';
 
 const style = {
     position: 'absolute',
@@ -22,24 +21,48 @@ const style = {
     p: 4,
 };
 
-export const SelectGradeModal = ({mainGrade, setMainGrade}) => {
+export const SelectGradeModal = ({mainGrade, setMainGrade, setNodes}) => {
 
     const [openModal, setOpenModal] = useState(false);
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
 
-    const handleGradeChange = (e) => {
-        setMainGrade(e.target.value)
+    const [courses, setCourses] = useState();
+
+    const getCourses = async () => {
+        try {
+            const res = await axiosInstance.get("/course");
+            setCourses(res.data.courses);
+        } catch (err) {
+            alert(err.message)
+        }
     }
 
     const handleSelectAllGrades = () => {
-        if (mainGrade.length === grades.length) {
+        if (mainGrade.length === courses.length) {
             setMainGrade([])
-        }
-        else {
-            setMainGrade(grades)
+        } else {
+            const courseIds = courses.map((course) => course.course_id)
+            setMainGrade(courseIds)
         }
     }
+
+    const getFilteredNodes = async () => {
+        try {
+          const res = await axiosInstance.post("/node/filter", {course_ids: mainGrade});
+          setNodes(res.data.filtered_nodes);
+        } catch (err) {
+          alert(err.message);
+        }
+    };
+
+    const submitGradeHandler = () => {
+      getFilteredNodes();  
+    }
+
+    useEffect(() => {
+        getCourses();
+    }, [])
 
 
   return (
@@ -52,27 +75,68 @@ export const SelectGradeModal = ({mainGrade, setMainGrade}) => {
                 aria-describedby="modal-modal-description"
             >
             <Box sx={style}>
-                <FormControl fullWidth>
-                    <InputLabel id="demo-simple-select-label">Grade</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
-                        value={mainGrade}
-                        label="Grade"
-                        onChange={handleGradeChange}
-                    >
-                        <MenuItem value={1}>Grade 1</MenuItem>
-                        <MenuItem value={2}>Grade 2</MenuItem>
-                        <MenuItem value={3}>Grade 3</MenuItem>
-                        <MenuItem value={4}>Grade 4</MenuItem>
-                        <MenuItem value={5}>Grade 5</MenuItem>
-                        <MenuItem value={6}>Grade 6</MenuItem>
-                        <MenuItem value={7}>Grade 7</MenuItem>
-                        <MenuItem value={8}>Grade 8</MenuItem>
-                        <MenuItem value={9}>Grade 9</MenuItem>
-                        <MenuItem value={10}>Grade 10</MenuItem>
-                    </Select>
-                </FormControl>
+                <p className="text-lg mb-5 font-semibold">Select Grades</p>
+                {
+                    courses && (
+                        <>
+                            <FormControl fullWidth>
+                            <InputLabel id="checkbox-dropdown-label">Grades</InputLabel>
+                                <Select
+                                    labelId='checkbox-dropdown-label'
+                                    id='checkbox-dropdown'
+                                    multiple
+                                    label='Grades'
+                                    value={mainGrade}
+                                    onChange={() => {}}
+                                    renderValue={(selected) => selected.join(', ')}
+                                >
+                                    <MenuItem key="select-all" onClick={handleSelectAllGrades}>
+                                        <FormControlLabel 
+                                            control={
+                                                <Checkbox 
+                                                    indeterminate={
+                                                        mainGrade.length > 0 && 
+                                                        mainGrade.length < courses.length
+                                                    }
+                                                    checked={
+                                                        mainGrade.length === courses.length
+                                                    }
+                                                />
+                                            }
+                                            label="Select All"
+                                        />
+                                    </MenuItem>
+                                    {
+                                        courses.map((course) => (
+                                            <MenuItem key={course.course_id} value={course.course_id}>
+                                                <FormControlLabel 
+                                                    control={
+                                                        <Checkbox 
+                                                            checked={mainGrade.includes(course.course_id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setMainGrade([...mainGrade, course.course_id])
+                                                                } else {
+                                                                    setMainGrade(mainGrade.filter((id) => id !== course.course_id))
+                                                                }
+                                                            }}
+                                                        />
+                                                    }
+                                                    label={course.course_title}
+                                                />
+                                            </MenuItem>
+                                        ))
+                                    }
+                                </Select>
+                            </FormControl>
+                        </>
+                    )
+                }
+                <div className="mt-5 flex justify-end">
+                    <Button onClick={submitGradeHandler}>
+                        Submit
+                    </Button>
+                </div>
             </Box>
         </Modal>
     </div>
