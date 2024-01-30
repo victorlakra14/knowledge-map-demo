@@ -16,7 +16,7 @@ export const BottomBar = ({mainGrade, setMainGrade, addNewNode}) => {
             </div>
             <div className="w-[50vw] h-[90px] rounded bg-white border border-black drop-shadow-lg">
                 <div className="flex items-center justify-center h-full">
-                    <Button onClick={addNewNode}>Add New Node</Button>
+                    {/* <Button onClick={addNewNode}>Add New Node</Button> */}
                     <SelectGradeModal mainGrade={mainGrade} setMainGrade={setMainGrade}/>
                 </div>
             </div>
