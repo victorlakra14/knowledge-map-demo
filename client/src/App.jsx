@@ -14,6 +14,7 @@ import { BottomBar } from "./components/BottomBar/BottomBar";
 import TopicEdges from "./edges/TopicEdges";
 import axiosInstance from "./Axios";
 import { v4 } from "uuid";
+import { TopRightPanel } from "./components/TopRightPanel/TopRightPanel";
 
 const nodeTypes = {
   topicNode: TopicNode,
@@ -26,6 +27,8 @@ const edgeTypes = {
 function App() {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+
+  const [reload, setReload] = useState(false);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -48,6 +51,7 @@ function App() {
 
     try {
       const res = await axiosInstance.post("/edge/add", edgeObj);
+      setReload(true); // to fetch the updated data from the server as new edge is added and we don't have the edge id
       console.log("Edge added successfully", res);
     } catch (err) {
       alert(err.message);
@@ -76,6 +80,7 @@ function App() {
 
       try {
         const res = await axiosInstance.put(`/node/updateposition/${_id}`, {position});
+        // const res = await axiosInstance.put(`/testNodes/updateposition/${_id}`, {position});
         console.log("Node position updated successfully", res);
       } catch (err) {
         alert(err.message);
@@ -95,13 +100,18 @@ function App() {
   };
 
   // const main grade selection
-  const [mainGrade, setMainGrade] = useState(["1"]);
+  const [mainGrade, setMainGrade] = useState(["1", "2", "3", "4", "5", "6"]);
 
   // Test server backend data fetch
   const getNodes = async () => {
     try {
+      // const res = await axiosInstance.get("/testNodes");
       const res = await axiosInstance.get("/node");
-      // const res = await axiosInstance.post("/node/filter", {course_ids: mainGrade})
+      // const nodesWithIdAsString = res.data.testNodes.map(node => ({
+      //   ...node,
+      //   id: String(node.id)
+      // }));
+      // setNodes(nodesWithIdAsString);
       setNodes(res.data.nodes);
     } catch (err) {
       alert(err.message);
@@ -120,7 +130,10 @@ function App() {
   useEffect(() => {
     getNodes();
     getEdges();
-  }, []);
+    if(reload){
+      setReload(false);
+    }
+  }, [reload]);
 
   return (
     <>
@@ -140,8 +153,12 @@ function App() {
         <Controls />
         <MiniMap nodeStrokeWidth={3} />
       </ReactFlow>
+      <Panel position="top-right">
+        <TopRightPanel />
+      </Panel>
       <Panel position="bottom-center">
         <BottomBar
+          setReload={setReload}
           mainGrade={mainGrade}
           setMainGrade={setMainGrade}
           addNewNode={addNewNode}

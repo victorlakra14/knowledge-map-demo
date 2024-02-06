@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SelectGradeModal } from '../SelectGradeModal/SelectGradeModal';
-import { Button } from '@mui/material';
+import { AddNewNodeModal } from '../AddNewNodeModal/AddNewNodeModal';
 
-export const BottomBar = ({mainGrade, setMainGrade, addNewNode, setNodes}) => {
+export const BottomBar = ({mainGrade, setMainGrade, addNewNode, setNodes, setReload}) => {
 
     const [barOpen, setBarOpen] = useState(false);
 
@@ -15,8 +15,8 @@ export const BottomBar = ({mainGrade, setMainGrade, addNewNode, setNodes}) => {
                 <ExpandMoreIcon className="text-black " fontSize='large'/>
             </div>
             <div className="w-[50vw] h-[90px] rounded bg-white border border-black drop-shadow-lg">
-                <div className="flex items-center justify-center h-full">
-                    {/* <Button onClick={addNewNode}>Add New Node</Button> */}
+                <div className="flex items-center gap-5 justify-center h-full">
+                    <AddNewNodeModal setReload={setReload}/>
                     <SelectGradeModal mainGrade={mainGrade} setMainGrade={setMainGrade} setNodes={setNodes} />
                 </div>
             </div>

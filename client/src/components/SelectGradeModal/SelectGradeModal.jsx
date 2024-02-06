@@ -50,6 +50,7 @@ export const SelectGradeModal = ({mainGrade, setMainGrade, setNodes}) => {
     const getFilteredNodes = async () => {
         try {
           const res = await axiosInstance.post("/node/filter", {course_ids: mainGrade});
+            // const res = await axiosInstance.post("/testNodes/filter", {course_ids: mainGrade});
           setNodes(res.data.filtered_nodes);
         } catch (err) {
           alert(err.message);
@@ -88,7 +89,10 @@ export const SelectGradeModal = ({mainGrade, setMainGrade, setNodes}) => {
                                     label='Grades'
                                     value={mainGrade}
                                     onChange={() => {}}
-                                    renderValue={(selected) => selected.join(', ')}
+                                    renderValue={(selected) => {
+                                        const selectedCourses = courses.filter((course) => selected.includes(course.course_id));
+                                        return selectedCourses.map((course) => course.course_title).join(', ');
+                                    }}
                                 >
                                     <MenuItem key="select-all" onClick={handleSelectAllGrades}>
                                         <FormControlLabel 
