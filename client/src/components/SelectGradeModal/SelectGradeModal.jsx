@@ -33,6 +33,8 @@ export const SelectGradeModal = ({mainGrade, setMainGrade, setNodes}) => {
         try {
             const res = await axiosInstance.get("/course");
             setCourses(res.data.courses);
+            const courseIds = res.data.courses.map((course) => course.course_id);
+            setMainGrade(courseIds);
         } catch (err) {
             alert(err.message)
         }
@@ -49,9 +51,12 @@ export const SelectGradeModal = ({mainGrade, setMainGrade, setNodes}) => {
 
     const getFilteredNodes = async () => {
         try {
-          const res = await axiosInstance.post("/node/filter", {course_ids: mainGrade});
-            // const res = await axiosInstance.post("/testNodes/filter", {course_ids: mainGrade});
-          setNodes(res.data.filtered_nodes);
+        //   const res = await axiosInstance.post("/node/filter", {course_ids: mainGrade});
+            const res = await axiosInstance.post("/testNodes/filter", {course_ids: mainGrade});
+          setNodes(res.data.filtered_testNodes);
+          setTimeout(() => {
+            handleCloseModal();
+          }, 1 * 1000);
         } catch (err) {
           alert(err.message);
         }

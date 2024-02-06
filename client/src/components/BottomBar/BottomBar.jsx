@@ -3,7 +3,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SelectGradeModal } from '../SelectGradeModal/SelectGradeModal';
 import { AddNewNodeModal } from '../AddNewNodeModal/AddNewNodeModal';
 
-export const BottomBar = ({mainGrade, setMainGrade, addNewNode, setNodes, setReload}) => {
+export const BottomBar = ({mainGrade, setMainGrade, setNodes, setReload}) => {
 
     const [barOpen, setBarOpen] = useState(false);
 

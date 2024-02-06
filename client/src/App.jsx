@@ -6,6 +6,10 @@ import ReactFlow, {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
+  ReactFlowProvider,
+  useNodesState,
+  useEdgesState,
+  useReactFlow
 } from "reactflow";
 import "./App.css";
 import { useCallback, useEffect, useState } from "react";
@@ -14,7 +18,9 @@ import { BottomBar } from "./components/BottomBar/BottomBar";
 import TopicEdges from "./edges/TopicEdges";
 import axiosInstance from "./Axios";
 import { v4 } from "uuid";
+import Dagre from "@dagrejs/dagre";
 import { TopRightPanel } from "./components/TopRightPanel/TopRightPanel";
+import "reactflow/dist/style.css";
 
 const nodeTypes = {
   topicNode: TopicNode,
@@ -24,11 +30,42 @@ const edgeTypes = {
   topicEdge: TopicEdges,
 };
 
+// layout implentation
+const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+
+const getLayoutedElements = (nodes, edges, options) => {
+  // g.setGraph({ rankdir: "LR" });
+  if(options.direction === "TB"){
+    g.setGraph({
+      rankdir: options.direction,
+      ranksep: 200,
+      nodesep: 200,
+    });
+  }else{
+    g.setGraph({
+      rankdir: options.direction,
+    });
+  }
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) => g.setNode(node.id, node));
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const { x, y } = g.node(node.id);
+
+      return { ...node, position: { x, y } };
+    }),
+    edges
+  };
+};
+
 function App() {
+  const { fitView } = useReactFlow();
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-
-  const [reload, setReload] = useState(false);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -39,6 +76,8 @@ function App() {
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
+
+  const [reload, setReload] = useState(false);
 
   const onConnect = useCallback(async (connection) => {
     const edgeObj = {
@@ -79,8 +118,8 @@ function App() {
       );
 
       try {
-        const res = await axiosInstance.put(`/node/updateposition/${_id}`, {position});
-        // const res = await axiosInstance.put(`/testNodes/updateposition/${_id}`, {position});
+        // const res = await axiosInstance.put(`/node/updateposition/${_id}`, {position});
+        const res = await axiosInstance.put(`/testNodes/updateposition/${_id}`, {position});
         console.log("Node position updated successfully", res);
       } catch (err) {
         alert(err.message);
@@ -88,31 +127,20 @@ function App() {
     }, []
   )
 
-  const addNewNode = () => {
-    const newNode = {
-      id: `n-${nodes.length + 1}`,
-      position: { x: 200, y: 200 },
-      data: { label: `Topic ${mainGrade} - ${nodes.length + 1}` },
-      type: "topicNode",
-    };
-
-    setNodes((prevNodes) => [...prevNodes, newNode]);
-  };
-
   // const main grade selection
-  const [mainGrade, setMainGrade] = useState(["1", "2", "3", "4", "5", "6"]);
+  const [mainGrade, setMainGrade] = useState([]);
 
   // Test server backend data fetch
   const getNodes = async () => {
     try {
-      // const res = await axiosInstance.get("/testNodes");
-      const res = await axiosInstance.get("/node");
-      // const nodesWithIdAsString = res.data.testNodes.map(node => ({
-      //   ...node,
-      //   id: String(node.id)
-      // }));
-      // setNodes(nodesWithIdAsString);
-      setNodes(res.data.nodes);
+      const res = await axiosInstance.get("/testNodes");
+      // const res = await axiosInstance.get("/node");
+      const nodesWithIdAsString = res.data.testNodes.map(node => ({
+        ...node,
+        id: String(node.id)
+      }));
+      setNodes(nodesWithIdAsString);
+      // setNodes(res.data.nodes);
     } catch (err) {
       alert(err.message);
     }
@@ -135,36 +163,57 @@ function App() {
     }
   }, [reload]);
 
+  const onLayout = useCallback(
+    (direction) => {
+      const layouted = getLayoutedElements(nodes, edges, { direction });
+
+      setNodes([...layouted.nodes]);
+      setEdges([...layouted.edges]);
+
+      window.requestAnimationFrame(() => {
+        fitView();
+      });
+    },
+    [nodes, edges]
+  )
+
   return (
     <>
-      <ReactFlow
-        nodes={nodes}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onNodeDragStop={onNodeDragStop}
-        edges={edges}
-        edgeTypes={edgeTypes}
-        onEdgesChange={onEdgesChange}
-        onEdgesDelete={onEdgesDelete}
-        onConnect={onConnect}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap nodeStrokeWidth={3} />
-      </ReactFlow>
-      <Panel position="top-right">
-        <TopRightPanel />
-      </Panel>
-      <Panel position="bottom-center">
-        <BottomBar
-          setReload={setReload}
-          mainGrade={mainGrade}
-          setMainGrade={setMainGrade}
-          addNewNode={addNewNode}
-          setNodes={setNodes}
-        />
-      </Panel>
+      <ReactFlowProvider>
+        <ReactFlow
+          nodes={nodes}
+          nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
+          onNodeDragStop={onNodeDragStop}
+          edges={edges}
+          edgeTypes={edgeTypes}
+          onEdgesChange={onEdgesChange}
+          onEdgesDelete={onEdgesDelete}
+          onConnect={onConnect}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap nodeStrokeWidth={3} />
+        </ReactFlow>
+        <Panel position="top-left">
+          <div style={{display: "flex", gap: "10px", backgroundColor: "white"}}>
+            <button onClick={() => onLayout("TB")}>Horizontal</button>
+            <button onClick={() => onLayout("LR")}>Vertical</button>
+          </div>
+        </Panel>
+        <Panel position="top-right">
+          <TopRightPanel />
+        </Panel>
+        <Panel position="bottom-center">
+          <BottomBar
+            setReload={setReload}
+            mainGrade={mainGrade}
+            setMainGrade={setMainGrade}
+            setNodes={setNodes}
+          />
+        </Panel>
+      </ReactFlowProvider>
     </>
   );
 }

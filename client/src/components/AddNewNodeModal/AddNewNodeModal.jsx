@@ -113,8 +113,8 @@ export const AddNewNodeModal = ({setReload}) => {
         }
 
         try {
-            const res = await axiosInstance.post("/node/add", newNodeWithID);
-            // const res = await axiosInstance.post("/testNodes/add", newNodeWithID);
+            // const res = await axiosInstance.post("/node/add", newNodeWithID);
+            const res = await axiosInstance.post("/testNodes/add", newNodeWithID);
             console.log("Node added successfully", res);
             setReload(true);
             handleCloseAddNewNodeModal();
