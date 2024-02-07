@@ -20,6 +20,7 @@ import axiosInstance from "./Axios";
 import { v4 } from "uuid";
 import Dagre from "@dagrejs/dagre";
 import { TopRightPanel } from "./components/TopRightPanel/TopRightPanel";
+import { schemeCategory10 } from 'd3-scale-chromatic';
 import "reactflow/dist/style.css";
 
 const nodeTypes = {
@@ -62,10 +63,44 @@ const getLayoutedElements = (nodes, edges, options) => {
   };
 };
 
+const getColorScale = () => {
+  return schemeCategory10;
+}
+
+function nodeColor(node){
+  const colorScale = getColorScale();
+  return colorScale[node.data.course_id % colorScale.length];
+}
+
 function App() {
   const { fitView } = useReactFlow();
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+
+  const getCourses = async () => {
+    try {
+        const res = await axiosInstance.get("/course");
+        const courseIds = res.data.courses.map((course) => course.course_id);
+        setMainGrade(courseIds);
+    } catch (err) {
+        alert(err.message)
+    }
+  }
+
+  const getNodesStart = async () => {
+    try {
+      const resCourses = await axiosInstance.get("/course");
+      const courseIds = resCourses.data.courses.map((course) => course.course_id);
+      const resNodes = await axiosInstance.post("/testNodes/filter", {course_ids: courseIds});
+      const nodesWithIdAsString = resNodes.data.filtered_testNodes.map(node => ({
+        ...node,
+        id: String(node.id)
+      }));
+      setNodes(nodesWithIdAsString);
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -90,7 +125,7 @@ function App() {
 
     try {
       const res = await axiosInstance.post("/edge/add", edgeObj);
-      setReload(true); // to fetch the updated data from the server as new edge is added and we don't have the edge id
+      getEdges(); // to fetch the updated data from the server as new edge is added and we don't have the edge id
       console.log("Edge added successfully", res);
     } catch (err) {
       alert(err.message);
@@ -133,9 +168,10 @@ function App() {
   // Test server backend data fetch
   const getNodes = async () => {
     try {
-      const res = await axiosInstance.get("/testNodes");
+      // const res = await axiosInstance.get("/testNodes");
+      const res = await axiosInstance.post("/testNodes/filter", {course_ids: mainGrade})
       // const res = await axiosInstance.get("/node");
-      const nodesWithIdAsString = res.data.testNodes.map(node => ({
+      const nodesWithIdAsString = res.data.filtered_testNodes.map(node => ({
         ...node,
         id: String(node.id)
       }));
@@ -156,11 +192,23 @@ function App() {
   };
 
   useEffect(() => {
-    getNodes();
-    getEdges();
-    if(reload){
-      setReload(false);
+    if(mainGrade.length > 0){
+      getCourses();
+      getNodes();
+      getEdges();
+      if(reload){
+        setReload(false);
+      }
+    }else{
+      getNodesStart();
+      getCourses();
+      getNodes();
+      getEdges();
+      if(reload){
+        setReload(false);
+      }
     }
+    
   }, [reload]);
 
   const onLayout = useCallback(
@@ -180,39 +228,46 @@ function App() {
   return (
     <>
       <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onNodeDragStop={onNodeDragStop}
-          edges={edges}
-          edgeTypes={edgeTypes}
-          onEdgesChange={onEdgesChange}
-          onEdgesDelete={onEdgesDelete}
-          onConnect={onConnect}
-          fitView
-        >
-          <Background />
-          <Controls />
-          <MiniMap nodeStrokeWidth={3} />
-        </ReactFlow>
-        <Panel position="top-left">
-          <div style={{display: "flex", gap: "10px", backgroundColor: "white"}}>
-            <button onClick={() => onLayout("TB")}>Horizontal</button>
-            <button onClick={() => onLayout("LR")}>Vertical</button>
-          </div>
-        </Panel>
-        <Panel position="top-right">
-          <TopRightPanel />
-        </Panel>
-        <Panel position="bottom-center">
-          <BottomBar
-            setReload={setReload}
-            mainGrade={mainGrade}
-            setMainGrade={setMainGrade}
-            setNodes={setNodes}
-          />
-        </Panel>
+        {
+          nodes && (
+            <>
+              <ReactFlow
+                nodes={nodes}
+                nodeTypes={nodeTypes}
+                onNodesChange={onNodesChange}
+                onNodeDragStop={onNodeDragStop}
+                edges={edges}
+                edgeTypes={edgeTypes}
+                onEdgesChange={onEdgesChange}
+                onEdgesDelete={onEdgesDelete}
+                onConnect={onConnect}
+                fitView
+              >
+                <Background />
+                <Controls />
+                <MiniMap pannable zoomable nodeStrokeWidth={3} nodeColor={nodeColor} />
+              </ReactFlow>
+              <Panel position="top-left">
+                <div className="flex gap-5 bg-white drop-shadow-md rounded p-3">
+                  <button onClick={() => onLayout("TB")} class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Horizontal</button>
+                  <button onClick={() => onLayout("LR")} class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Vertical</button>
+                  <button onClick={() => getNodes()} class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Reset</button>
+                </div>
+              </Panel>
+              <Panel position="top-right">
+                <TopRightPanel />
+              </Panel>
+              <Panel position="bottom-center">
+                <BottomBar
+                  getNodes={getNodes}
+                  mainGrade={mainGrade}
+                  setMainGrade={setMainGrade}
+                  setNodes={setNodes}
+                />
+              </Panel>
+            </>
+          )
+        }
       </ReactFlowProvider>
     </>
   );

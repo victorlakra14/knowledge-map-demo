@@ -3,7 +3,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SelectGradeModal } from '../SelectGradeModal/SelectGradeModal';
 import { AddNewNodeModal } from '../AddNewNodeModal/AddNewNodeModal';
 
-export const BottomBar = ({mainGrade, setMainGrade, setNodes, setReload}) => {
+export const BottomBar = ({mainGrade, setMainGrade, setNodes, getNodes}) => {
 
     const [barOpen, setBarOpen] = useState(false);
 
@@ -16,7 +16,7 @@ export const BottomBar = ({mainGrade, setMainGrade, setNodes, setReload}) => {
             </div>
             <div className="w-[50vw] h-[90px] rounded bg-white border border-black drop-shadow-lg">
                 <div className="flex items-center gap-5 justify-center h-full">
-                    <AddNewNodeModal setReload={setReload}/>
+                    <AddNewNodeModal getNodes={getNodes} setNodes={setNodes}/>
                     <SelectGradeModal mainGrade={mainGrade} setMainGrade={setMainGrade} setNodes={setNodes} />
                 </div>
             </div>

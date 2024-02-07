@@ -15,7 +15,7 @@ const style = {
     p: 4,
 };
 
-export const AddNewNodeModal = ({setReload}) => {
+export const AddNewNodeModal = ({getNodes, setNodes}) => {
 
     const [openAddNewNodeModal, setOpenAddNewNodeModal] = useState(false);
     const [courses, setCourses] = useState();
@@ -116,7 +116,7 @@ export const AddNewNodeModal = ({setReload}) => {
             // const res = await axiosInstance.post("/node/add", newNodeWithID);
             const res = await axiosInstance.post("/testNodes/add", newNodeWithID);
             console.log("Node added successfully", res);
-            setReload(true);
+            setNodes((prevNodes) => [...prevNodes, res.data.testNode]);
             handleCloseAddNewNodeModal();
         } catch (err) {
             alert(err.message)
@@ -127,8 +127,6 @@ export const AddNewNodeModal = ({setReload}) => {
         getCourses();
         getChapters();
     }, [])
-
-    console.log("newNode", newNode);
 
   return (
     <div className="add-new-modal-node-container">

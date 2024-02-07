@@ -4,8 +4,6 @@ import { Handle, Position } from 'reactflow'
 
 export const TopicNode = ({data}) => {
 
-  console.log("Topic node data", data);
-
   const getColorScale = () => {
     return schemeCategory10;
   }
